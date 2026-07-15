@@ -1,0 +1,49 @@
+version: "3.9"
+
+services:
+
+  postgres:
+    image: postgres:16
+    container_name: ewpms-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ewpms
+      POSTGRES_USER: ewpms
+      POSTGRES_PASSWORD: ewpms123
+      TZ: Africa/Cairo
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  backend:
+    build:
+      context: ./backend
+    container_name: ewpms-backend
+    restart: unless-stopped
+    depends_on:
+      - postgres
+    environment:
+      DATABASE_URL: postgresql+psycopg://ewpms:ewpms123@postgres:5432/ewpms
+      SECRET_KEY: change_this_secret_key
+      ALGORITHM: HS256
+      ACCESS_TOKEN_EXPIRE_MINUTES: 480
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: ewpms-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+
+volumes:
+  postgres_data:
